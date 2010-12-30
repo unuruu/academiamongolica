@@ -1,0 +1,63 @@
+
+body {
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    font-family: Arial;
+}
+
+body, td, input, textarea {
+    font-family: Arial;
+    font-size: 13px;
+}
+
+input, textarea {
+    border: solid 1px #cecece;
+}
+
+td {
+    padding-top: 5px;
+}
+
+input {
+    width: 100%;
+    font-size: 15px;
+    height: 30px;
+}
+
+textarea {
+    width: 100%;
+    height: 80px;
+}
+
+h1 {
+    font-size: 22px;
+}
+
+div {
+    margin-bottom: 3px;
+}
+
+form {
+    background: #eee;
+    padding: 10px;
+}
+
+#description {
+    color: #666;
+}
+
+.translation {
+    border-bottom: solid 1px #eee;
+    padding-bottom: 2px;
+}
+
+.translation_text {
+    font-size: 15px;
+}
+
+.autocomplete-w1 { position:absolute; top:0px; left:0px; margin:6px 0 0 6px; /* IE6 fix: */ _background:none; _margin:1px 0 0 0; }
+.autocomplete { border:1px solid #999; background:#FFF; cursor:default; text-align:left; max-height:350px; overflow:auto; margin:-6px 6px 6px -6px; /* IE6 specific: */ _height:350px;  _margin:0; _overflow-x:hidden; }
+.autocomplete .selected { background:#F0F0F0; }
+.autocomplete div { padding:2px 5px; white-space:nowrap; overflow:hidden; }
+.autocomplete strong { font-weight:normal; color:#3399FF; }

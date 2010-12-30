@@ -1,0 +1,113 @@
+<html>
+    <head>
+        <title>Dicton</title>
+        <link rel="stylesheet" href="/static/styles.css" />
+        <script type="text/javascript" src="/static/jquery-1.4.4.min.js"></script>
+        <script type="text/javascript" src="/static/jquery.autocomplete-min.js"></script>
+        <script type="text/javascript" src="/static/json2.js"></script>
+        <script type="text/javascript">        
+            $(document).ready(function() {
+                $("#lookup").bind("keyup", function() {
+                    
+                });                
+                $("#lookup").bind("keydown", function(event) {
+                    if (event.keyCode == 13) {
+                        var keyword = $.trim($("#lookup").val());
+                        location.href = "/" + keyword;
+                    }
+                });                
+                $("#lookup").autocomplete({ 
+                    serviceUrl: "/lookup",
+                    deferRequestBy: 0, //miliseconds
+                    noCache: false //set to true, to disable caching
+                });
+            });
+            
+            function vote(translation,val) {
+                $.ajax({
+                    url: "/vote",
+                    type: "post",
+                    data: "translation=" + translation +
+                        "&val=" + val,
+                    success: function(data) {
+                        ret = JSON.parse(data);
+                        $("#" + ret.translation).find("span").text(ret.vote);
+                    }
+                });
+            }            
+        </script>
+    </head>
+    <body>
+        <div>
+            <input id="lookup" value="{{ entry.entry }}" />
+        </div>
+        <div id="description">
+            {{ entry.description }}
+        </div>       
+        <h1>{{ entry.entry }}</h1>
+        {% ifequal entry_exists 0 %}
+            <div>
+                <form action="/new" method="post">
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                Толь бичгэнд одоогоор ийм үг байхгүй байна. Та энэ үгэнд 
+                                тодорхой тайлбар хийн оруулны дараа орчуулгын санал 
+                                оруулах боломжтой. Энэ хэсгийг хоосон орхиж болно.
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><textarea name="description"></textarea></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <input name="entry" type="hidden" value="{{ entry.entry }}" />
+                                <button type="submit">Нэм</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            </div>
+        {% endifequal %}
+        <div>
+            {% for translation in translations %}
+                <div id="{{ translation.key.id }}" class="translation">
+                    <div class="translation_text">{{ translation.translation }}</div>
+                    <div>
+                        <a href="javascript:;" title="Таалагдаж байна" 
+                            onclick="vote({{ translation.key.id }}, 'up');">
+                            <img align="middle" border="0" src="/static/thumbs-up.gif" width="16" /></a> 
+                        <a href="javascript:;" title="Таалагдахгүй байна"
+                            onclick="vote( {{ translation.key.id }}, 'down');">
+                            <img align="middle" border="0" src="/static/thumbs-down.gif" width="16" /></a> 
+                        <span>{{ translation.vote }}</span> саналтай
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+        {% ifequal entry_exists 1 %}
+        <div id="new_translation">
+            <form action="/new_translation" method="post">
+                <table width="100%">
+                    <tr>
+                        <td>
+                            <strong>Орчуулгын санал нэмэх</strong>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <textarea name="translation"></textarea>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <input name="entry" type="hidden" value="{{ entry.entry }}" />
+                            <button type="submit">Шинэ санал нэм</button>
+                        </td>
+                    </tr>
+                </table>
+            </form>
+        </div>
+        {% endifequal %}
+    </body>
+</html>
