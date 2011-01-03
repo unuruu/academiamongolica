@@ -34,7 +34,7 @@
                     <div id="{{ translation.key.id }}" class="translation">
                         <div class="translation_text">
                             <a href="http://twitter.com/{{ translation.user }}">@{{ translation.user }}</a>:  
-                            {{ translation.translation }}
+                            {{ translation.translation|escape }}
                         </div>
                         <div>
                             <a href="javascript:;" title="Таалагдаж байна" 

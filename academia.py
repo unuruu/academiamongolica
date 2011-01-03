@@ -147,6 +147,7 @@ class CommentPage(webapp.RequestHandler):
 
 class EntryPage(webapp.RequestHandler):
     def get(self, entry):
+        session = get_current_session()
         entries = models.Entry.gql("where entry=:1", entry)
         template_values = {}
         if entries.count() == 0:
@@ -165,8 +166,8 @@ class EntryPage(webapp.RequestHandler):
                 "translations": translations,
                 "translations_count": translations.count()
                 }
-        session = get_current_session()
-        if session.has_key("twitter_user"):
+        
+        if session != None and session.has_key("twitter_user"):
             template_values["user"] = session["twitter_user"]
         self.response.out.write(template.render("index.html", template_values))
 
