@@ -432,8 +432,8 @@ class SessionMiddleware(object):
         self.cookie_key = cookie_key
         if not self.cookie_key:
             raise ValueError("cookie_key MUST be specified")
-        if len(self.cookie_key) < 32:
-            raise ValueError("RFC2104 recommends you use at least a 32 character key.  Try os.urandom(64) to make a key.")
+        # if len(self.cookie_key) < 32:
+        #    raise ValueError("RFC2104 recommends you use at least a 32 character key.  Try os.urandom(64) to make a key.")
 
     def __call__(self, environ, start_response):
         # initialize a session for the current user
