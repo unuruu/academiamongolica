@@ -167,7 +167,7 @@ class EntryPage(webapp.RequestHandler):
                 "translations_count": translations.count()
                 }
         
-        if session != None and session.has_key("twitter_user"):
+        if session.has_key("twitter_user"):
             template_values["user"] = session["twitter_user"]
         self.response.out.write(template.render("index.html", template_values))
 
