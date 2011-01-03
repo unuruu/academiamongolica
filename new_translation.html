@@ -1,0 +1,23 @@
+<div id="new_translation">
+    {% if user %}
+    <form action="/new_translation" method="post">
+        <table width="100%">
+            <tr>
+                <td>
+                    <textarea name="translation"></textarea>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <input name="entry" type="hidden" value="{{ entry.entry }}" />
+                    <button type="submit">Шинэ санал нэм</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    {% else %}
+        Та Twitter хэрэглэн 
+        <a href="/tweet_auth">системд нэвтэрснээр</a> 
+        шинэ орчуулгын санал оруулж чадна.
+    {% endif %}
+</div>

@@ -1,0 +1,28 @@
+<div>
+    {% if user %}
+        <form action="/new" method="post">
+            <table width="100%">
+                <tr>
+                    <td>
+                        Толь бичгэнд одоогоор ийм үг байхгүй байна. Та энэ үгэнд 
+                        тодорхой тайлбар хийн оруулны дараа орчуулгын санал 
+                        оруулах боломжтой. Энэ хэсгийг хоосон орхиж болно.
+                    </td>
+                </tr>
+                <tr>
+                    <td><textarea name="description"></textarea></td>
+                </tr>
+                <tr>
+                    <td>
+                        <input name="entry" type="hidden" value="{{ entry.entry }}" />
+                        <button type="submit">Нэм</button>
+                    </td>
+                </tr>
+            </table>
+        </form>
+    {% else %}
+        Толь бичгэнд одоогоор ийм үг байхгүй байна. Та Twitter хэрэглэн 
+        <a href="/tweet_auth">системд нэвтэрснээр</a> 
+        шинэ үг оруулж чадна.
+    {% endif %}
+</div>

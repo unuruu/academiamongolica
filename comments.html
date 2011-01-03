@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/static/styles.css" />
+        <script type="text/javascript" src="/static/jquery-1.4.4.min.js"></script>
+        <script type="text/javascript" src="/static/jquery.autocomplete-min.js"></script>
+        <script type="text/javascript" src="/static/json2.js"></script>
+        <script type="text/javascript" src="/static/scripts.js"></script>
+    </head>
+    <body>
+        {{ translation.translation }}
+        <h3>Сэтгэгдэлүүд</h3>
+        <div>
+            {% if user %}
+                <form action="" method="post">
+                    <table width="100%">
+                        <tr>
+                            <td>
+                                <textarea name="comment"></textarea>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <button type="submit">Шинэ сэтгэгдэл нэм</button>
+                            </td>
+                        </tr>
+                    </table>
+                </form>
+            {% else %}
+                Та Twitter хэрэглэн 
+                <a href="/tweet_auth">системд нэвтэрснээр</a> 
+                шинэ сэтгэгдэл оруулж чадна.
+            {% endif %}
+        </div>
+        {% for comment in comments %}
+            <div>
+                <a target="_top" href="http://twitter.com/{{ comment.user }}">@{{ comment.user }}</a>: 
+                {{ comment.comment|escape }}
+            </div>
+        {% endfor %}
+    </body>
+</html>
