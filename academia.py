@@ -16,7 +16,8 @@ consumer_secret = "w3py8vuCoYqv0fwrX4Xf25YOw7Z8JxQGj63b5Uv78"
 
 class TwitterAuthPage(webapp.RequestHandler):
     def get(self):
-        auth = tweepy.OAuthHandler(consumer_token, consumer_secret, "http://localhost:9999/twitter_back")
+        auth = tweepy.OAuthHandler(consumer_token, consumer_secret, 
+            "http://academiamongolica.appspot.com/twitter_back")
         url = auth.get_authorization_url()
         models.OAuthToken(
             token_key = auth.request_token.key,
@@ -101,6 +102,9 @@ class EntryPage(webapp.RequestHandler):
         template_values["new_entries"] = new_entries
         
         if entry is None:
+            if word == "":
+                self.redirect("/")
+                return
             entry =  models.Entry(
                 entry = urllib.unquote(word).lower(), 
                 description = "Ийм үг байхгүй байна",
@@ -140,9 +144,8 @@ class VotePage(webapp.RequestHandler):
             translation = models.Translation.gql("where __key__ = Key('Translation',:1)", int(trans)).get()
             votes = models.Vote.gql("where translation=:1 and user=:2", translation, session["twitter_user"])
             if votes.count() == 0:
-                vote = models.Vote(user = session["twitter_user"])
-                vote.translation = translation
-                vote.type = val
+                vote = models.Vote(user = session["twitter_user"],
+                    type = val, translation = translation)
                 vote.put()
                 translation.vote += val
                 translation.put()
