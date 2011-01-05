@@ -9,7 +9,7 @@
             </tr>
             <tr>
                 <td>
-                    <input name="entry" type="hidden" value="{{ entry.entry }}" />
+                    <input name="entry" type="hidden" value="{{ entry.key.id }}" />
                     <button type="submit">Шинэ санал нэм</button>
                 </td>
             </tr>
@@ -17,7 +17,7 @@
     </form>
     {% else %}
         Та Twitter хэрэглэн 
-        <a href="/tweet_auth">системд нэвтэрснээр</a> 
+        <a href="/twitter_auth">системд нэвтэрснээр</a> 
         шинэ орчуулгын санал оруулж чадна.
     {% endif %}
 </div>

@@ -1,11 +1,4 @@
-$(document).ready(function() {              
-    $("#lookup").bind("keydown", function(event) {
-        if (event.keyCode == 13) {
-            var keyword = $.trim($("#lookup").val());
-            location.href = "/" + keyword;
-        }
-    });
-    
+$(document).ready(function() {    
     $("#lookup").autocomplete({ 
         serviceUrl: "/lookup",
         deferRequestBy: 0,
@@ -14,8 +7,10 @@ $(document).ready(function() {
     
     $(".translation").click(function() {
         $(".translation").css("background", "#fff");
-        $(this).css("background", "#c5cfe1");
+        $(this).css("background", "#f0f0f0");
         $("#comments_window").attr("src", "comments/" + $(this).attr("id"));
+        $("#updates").hide();
+        $("#comments").fadeIn();
     });
 });
 

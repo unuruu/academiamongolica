@@ -4,17 +4,19 @@ from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
 from gaesessions import get_current_session
+
 import simplejson
 import urllib
+import datetime
 import tweepy
 import models
 
 consumer_token = "Q8XwfqvIapJ4TmcxCDwTGg"
 consumer_secret = "w3py8vuCoYqv0fwrX4Xf25YOw7Z8JxQGj63b5Uv78"
 
-class TweetAuthPage(webapp.RequestHandler):
+class TwitterAuthPage(webapp.RequestHandler):
     def get(self):
-        auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
+        auth = tweepy.OAuthHandler(consumer_token, consumer_secret, "http://localhost:9999/twitter_back")
         url = auth.get_authorization_url()
         models.OAuthToken(
             token_key = auth.request_token.key,
@@ -22,13 +24,13 @@ class TweetAuthPage(webapp.RequestHandler):
         ).put()
         self.redirect(url)
 
-class TweetOutPage(webapp.RequestHandler):
+class TwitterOutPage(webapp.RequestHandler):
     def get(self):
         session = get_current_session()
         session.terminate()
         self.redirect("/")
 
-class TweetBackPage(webapp.RequestHandler):
+class TwitterBackPage(webapp.RequestHandler):
     def get(self):
         oauth_token = self.request.get("oauth_token", None)
         oauth_verifier = self.request.get("oauth_verifier", None)
@@ -44,50 +46,90 @@ class TweetBackPage(webapp.RequestHandler):
         session["twitter_user"] = api.me().screen_name
         self.redirect("/")
 
-class RandomPage(webapp.RequestHandler):
+class LastEntryPage(webapp.RequestHandler):
     def get(self):
-        entries = models.Entry.gql("order by __key__ desc")
-        self.redirect("/" + entries[0].entry)
+        entry = models.Entry.gql("order by when desc").get()
+        self.redirect("/" + str(entry.key().id()))
 
 class LookupPage(webapp.RequestHandler):
     def get(self):
         query = self.request.get("query")
         entries = models.Entry.gql("where entry>=:1 and entry<:2", query, query + u'\ufffd')
-        ret = "{\"query\": \"" + query + "\", \"suggestions\": ["
+        json = "{\"query\": \"" + query + "\", \"suggestions\": ["
         for entry in entries:
-            ret += "\"" + entry.entry + "\","
-        ret += "]}"
-        self.response.out.write(ret)
+            json += "\"" + entry.entry + "\","
+        json += "]}"
+        self.response.out.write(json)
 
-class NewPage(webapp.RequestHandler):
+class NewEntryPage(webapp.RequestHandler):
     def post(self):
         session = get_current_session()
         if session.has_key("twitter_user"):
-            new_entry = self.request.get("entry")
-            new_description = self.request.get("description").replace("\n", " ")
-            models.Entry(
-                entry = new_entry,
-                description = new_description,
+            entry = models.Entry(
+                entry = self.request.get("entry").lower(),
+                description = self.request.get("description").replace("\n", " "),
                 user = session["twitter_user"]
-                ).put()
-            self.redirect("/" + new_entry)
+                )
+            entry.put()
+            self.redirect("/" + str(entry.key().id()))
         else:
             self.redirect("/")
         
 class NewTranslationPage(webapp.RequestHandler):
     def post(self):
         session = get_current_session()
+        entry = models.Entry.gql("where __key__=Key('Entry', :1)", 
+                    int(self.request.get("entry"))).get()
         if session.has_key("twitter_user"):
-            new_entry = self.request.get("entry")
-            new_translation = self.request.get("translation").replace("\n", " ")
             models.Translation(
-                entry = models.Entry.gql("where entry=:1", new_entry)[0],
-                translation = new_translation,
+                entry = entry,
+                translation = self.request.get("translation").replace("\n", " "),
                 user = session["twitter_user"]
                 ).put()
-            self.redirect("/" + new_entry)
+            self.redirect("/" + str(entry.key().id()))
         else:
             self.redirect("/")
+
+class EntryPage(webapp.RequestHandler):
+    def post(self, entryid):
+        session = get_current_session()
+        word = self.request.get("lookup")
+        entry = models.Entry.gql("where entry=:1", word.lower()).get()
+        template_values = {}
+        
+        new_entries = models.Entry.gql("order by when desc").fetch(20)
+        template_values["new_entries"] = new_entries
+        
+        if entry is None:
+            entry =  models.Entry(
+                entry = urllib.unquote(word).lower(), 
+                description = "Ийм үг байхгүй байна",
+                user = "dagvadorj")
+        else:
+            translations = models.Translation.gql("where entry=:1 order by vote desc", entry)
+            template_values["translations"] = translations
+        template_values["entry"] = entry
+        if session.has_key("twitter_user"):
+            template_values["user"] = session["twitter_user"]
+        self.response.out.write(template.render("index.html", template_values))
+    def get(self, entryid):
+        session = get_current_session()
+        entry = models.Entry.gql("where __key__=Key('Entry',:1)", int(entryid)).get()
+        template_values = {}
+        
+        new_entries = models.Entry.gql("order by when desc").fetch(20)
+        template_values["new_entries"] = new_entries
+        
+        if entry is None:
+            self.redirect("/")
+            return
+        else:
+            translations = models.Translation.gql("where entry=:1 order by vote desc", entry)
+            template_values["translations"] = translations
+        template_values["entry"] = entry
+        if session.has_key("twitter_user"):
+            template_values["user"] = session["twitter_user"]
+        self.response.out.write(template.render("index.html", template_values))
 
 class VotePage(webapp.RequestHandler):
     def post(self):
@@ -95,7 +137,7 @@ class VotePage(webapp.RequestHandler):
         if session.has_key("twitter_user"):
             trans = self.request.get("translation")
             val = int(self.request.get("val"))
-            translation = models.Translation.gql("where __key__ = Key('Translation',:1)", int(trans))[0]
+            translation = models.Translation.gql("where __key__ = Key('Translation',:1)", int(trans)).get()
             votes = models.Vote.gql("where translation=:1 and user=:2", translation, session["twitter_user"])
             if votes.count() == 0:
                 vote = models.Vote(user = session["twitter_user"])
@@ -124,7 +166,7 @@ class CommentPage(webapp.RequestHandler):
     def get(self, translation_key):
         translation = models.Translation.gql("where __key__ = Key('Translation',:1)", 
             int(translation_key))[0]
-        comments = models.Comment.gql("where translation=:1 order by __key__ desc", translation)
+        comments = models.Comment.gql("where translation=:1 order by when desc", translation)
         template_values = {
             "translation": translation,
             "comments": comments
@@ -139,49 +181,39 @@ class CommentPage(webapp.RequestHandler):
             translation = models.Translation.gql("where __key__ = Key('Translation',:1)", 
                 int(translation_key))[0]
             comment = self.request.get("comment").replace("\n", " ")
-            new_comment = models.Comment(user=session["twitter_user"])
-            new_comment.translation = translation
-            new_comment.comment = comment
+            new_comment = models.Comment(user=session["twitter_user"], 
+                comment = comment, translation = translation)
             new_comment.put()
-        self.redirect("/comments/" + translation_key);
-
-class EntryPage(webapp.RequestHandler):
-    def get(self, entry):
-        session = get_current_session()
-        entries = models.Entry.gql("where entry=:1", entry)
-        template_values = {}
-        if entries.count() == 0:
-            template_values = {
-                "entry": models.Entry(
-                    entry=urllib.unquote(entry), 
-                    description="Ийм үг байхгүй байна",
-                    user="dagvadorj"),
-                "entry_exists": 0
-                }
-        else:
-            translations = models.Translation.gql("where entry=:1 order by vote desc", entries[0])
-            template_values = {
-                "entry": entries[0],
-                "entry_exists": 1,
-                "translations": translations,
-                "translations_count": translations.count()
-                }
+        self.redirect("/comments/" + translation_key)
         
-        if session.has_key("twitter_user"):
-            template_values["user"] = session["twitter_user"]
-        self.response.out.write(template.render("index.html", template_values))
+class SetDatePage(webapp.RequestHandler):
+    def get(self):
+        now = datetime.datetime.now()
+        for translation in models.Translation.all():
+            translation.when = now
+            translation.put()
+        for entry in models.Entry.all():
+            entry.when = now
+            entry.put()
+        for comment in models.Comment.all():
+            comment.when = now
+            comment.put()
+        for vote in models.Vote.all():
+            vote.when = now
+            vote.put()
 
 application = webapp.WSGIApplication([
-				    ('/', RandomPage),
+				    ('/', LastEntryPage),
 				    ('/lookup', LookupPage),
-				    ('/new', NewPage),
+				    ('/new_entry', NewEntryPage),
 				    ('/new_translation', NewTranslationPage),
 				    ('/vote', VotePage),
 				    ('/comments/([0-9]+)', CommentPage),
-				    ('/tweet_auth', TweetAuthPage),
-				    ('/tweet_back', TweetBackPage),
-				    ('/tweet_out', TweetOutPage),
-				    ('/(.*)', EntryPage)],
+				    ('/twitter_auth', TwitterAuthPage),
+				    ('/twitter_back', TwitterBackPage),
+				    ('/twitter_out', TwitterOutPage),
+				    ('/set_date', SetDatePage),
+				    ('/([0-9]+)', EntryPage)],
 				    debug=True)
 
 def main():
@@ -190,7 +222,7 @@ def main():
 if __name__ == "__main__":
     if models.Entry.all().count() == 0:
         models.Entry(
-            entry = "Mongolia",
+            entry = "mongolia",
             description = "The country we love!",
             user = "dagvadorj"
         ).put()

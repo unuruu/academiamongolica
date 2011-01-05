@@ -10,31 +10,35 @@
     <body>
         <div align="right">
             {% if user %} 
-                Сайн уу, <a href="http://twitter.com/{{ user }}">@{{ user }}</a>. 
-            <a href="/tweet_out">Гарах</a>
+                Сайн уу, <a target="_blank" href="http://twitter.com/{{ user }}">@{{ user }}</a>. 
+            <a href="/twitter_out">Гарах</a>
             {% else %} 
-                <a href="/tweet_auth">Twitter хэрэглэн нэвтэр</a>
+                <a href="/twitter_auth">Twitter хэрэглэн нэвтэр</a>
             {% endif %}            
         </div>
         <div>
-            <input id="lookup" value="{{ entry.entry }}" />
+            <form action="" method="post">
+                <input id="lookup" name="lookup" value="{{ entry.entry }}" /> 
+                <button type="submit">Хай</button>
+            </form>
         </div>
         <div id="description">
-            <a href="http://twitter.com/{{ entry.user }}">@{{ entry.user }}</a> {{ entry.description }}
-        </div>       
-        <h1>{{ entry.entry }}</h1>
+            <a target="_blank" href="http://twitter.com/{{ entry.user }}">@{{ entry.user }}</a>: {{ entry.description|escape }}
+        </div>        
         <div id="translations">
-            {% ifequal entry_exists 0 %}
-                {% include "new.html" %}
-            {% else %}
+            <h1>{{ entry.entry|escape }}</h1>
+            {% if translations %}
                 {% include "new_translation.html" %}
-            {% endifequal %}
+            {% else %}                
+                {% include "new_entry.html" %}
+            {% endif %}
             <div>
                 {% for translation in translations %}
                     <div id="{{ translation.key.id }}" class="translation">
                         <div class="translation_text">
-                            <a href="http://twitter.com/{{ translation.user }}">@{{ translation.user }}</a>:  
+                            <a target="_blank" href="http://twitter.com/{{ translation.user }}">@{{ translation.user }}</a>:  
                             {{ translation.translation|escape }}
+                            <div class="date">{{ translation.when|date:"Y.m.d H:i" }}</div>
                         </div>
                         <div>
                             <a href="javascript:;" title="Таалагдаж байна" 
@@ -49,10 +53,23 @@
                 {% endfor %}
             </div>
         </div>
-        <div id="comments">
-            <iframe id="comments_window" 
-                width="100%" height="400" frameborder="0" scrolling="auto" 
-                marginheight="0" marginwidth="0"></iframe>
+        <div id="sidebar">
+            <div id="updates" style="padding-left: 5px;">
+                <h3>Шинээр орсон үгүүд</h3>
+                <ul>
+                {% for entry in new_entries %}
+                    <li><a href="/{{ entry.key.id }}">{{ entry.entry|escape }}</a></li>
+                {% endfor %}
+                </ul>
+            </div>
+            <div id="comments" style="display: none;">
+                <div style="padding: 5px;">
+                    <a href="javascript:;" onclick="$('#comments').hide(); $('#updates').fadeIn();">&lt; Хаа</a>
+                </div>
+                <iframe id="comments_window" 
+                    width="100%" height="400" frameborder="0" scrolling="auto" 
+                    marginheight="0" marginwidth="0"></iframe>
+            </div>
         </div>
     </body>
 </html>

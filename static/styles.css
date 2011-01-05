@@ -23,7 +23,7 @@ input {
     font-size: 15px;
     height: 28px;
     padding-left: 35px;
-    background: url('/static/search-icon.png') no-repeat;
+    background: url('/static/search-icon.png') no-repeat #fff;
 }
 
 textarea {
@@ -62,7 +62,7 @@ a:hover {
     width: 50%;
 }
 
-#comments {
+#sidebar {
     float: right;
     width: 50%;
 }
@@ -79,6 +79,11 @@ a:hover {
 
 .translation_text {
     font-size: 15px;
+}
+
+.date {
+    color: #aaa;
+    font-size: smaller;
 }
 
 .autocomplete-w1 { position:absolute; top:0px; left:0px; margin:6px 0 0 6px; /* IE6 fix: */ _background:none; _margin:1px 0 0 0; }
