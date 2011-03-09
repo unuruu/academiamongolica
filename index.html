@@ -1,11 +1,30 @@
 <html>
     <head>
         <title>{{ entry.entry }} - Academia Mongolica</title>
+        <meta name="google-site-verification" content="FyXhx9sUyi99raveMxfUOMueh16Qze_WIZ9Y27KUzHE" />
         <link rel="stylesheet" href="/static/styles.css" />
         <script type="text/javascript" src="/static/jquery-1.4.4.min.js"></script>
         <script type="text/javascript" src="/static/jquery.autocomplete-min.js"></script>
         <script type="text/javascript" src="/static/json2.js"></script>
         <script type="text/javascript" src="/static/scripts.js"></script>
+        <script type="text/javascript">
+            function all_entries() {
+                window.open("/all", "all_entries","height=300,width=530,screenX=100,left=100,screenY=5,top=5,channelmode=0,dependent=0,directories=0,fullscreen=0,location=0,menubar=0,resizable=1,scrollbars=1,status=0,toolbar=0");
+            }
+        </script>
+        <script type="text/javascript">
+
+          var _gaq = _gaq || [];
+          _gaq.push(['_setAccount', 'UA-20609975-1']);
+          _gaq.push(['_trackPageview']);
+
+          (function() {
+            var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+          })();
+
+        </script>
     </head>
     <body>
         <div align="right">
@@ -18,8 +37,17 @@
         </div>
         <div>
             <form action="" method="post">
-                <input id="lookup" name="lookup" value="{{ entry.entry }}" /> 
-                <button type="submit">Хай</button>
+                <input id="lookup" name="lookup" type="text" value="{{ entry.entry }}" /> 
+                <div>
+                    <table width="100%">
+                        <tr>
+                            <td><button type="submit">Хай</button></td>
+                            <td align="right">
+                                <a href="javascript:;" onclick="all_entries();">Бүх үгүүд</a>
+                            </td>
+                        </tr>
+                    </table>
+                </div>                
             </form>
         </div>
         <div id="description">
@@ -35,41 +63,72 @@
             <div>
                 {% for translation in translations %}
                     <div id="{{ translation.key.id }}" class="translation">
-                        <div class="translation_text">
-                            <a target="_blank" href="http://twitter.com/{{ translation.user }}">@{{ translation.user }}</a>:  
-                            {{ translation.translation|escape }}
-                            <div class="date">{{ translation.when|date:"Y.m.d H:i" }}</div>
-                        </div>
-                        <div>
-                            <a href="javascript:;" title="Таалагдаж байна" 
-                                onclick="vote({{ translation.key.id }}, 1);">
-                                <img align="middle" border="0" src="/static/thumbs-up.gif" width="16" /></a> 
-                            <a href="javascript:;" title="Таалагдахгүй байна"
-                                onclick="vote( {{ translation.key.id }}, -1);">
-                                <img align="middle" border="0" src="/static/thumbs-down.gif" width="16" /></a> 
-                            <span>{{ translation.vote }}</span> саналтай
-                        </div>
+                        <table width="100%">
+                            <tr>
+                                <td width="100">
+                                    <span style="font-size: 25px; ">{{ translation.vote }}</span>
+                                    <a href="javascript:;" title="Таалагдаж байна" 
+                                        onclick="vote({{ translation.key.id }}, 1);">
+                                        <img align="middle" border="0" src="/static/thumbs-up.gif" width="16" /></a> 
+                                    <a href="javascript:;" title="Таалагдахгүй байна"
+                                        onclick="vote( {{ translation.key.id }}, -1);">
+                                        <img align="middle" border="0" src="/static/thumbs-down.gif" width="16" /></a> 
+                                </td>
+                                <td>
+                                    <div class="translation_text">                                         
+                                        {{ translation.translation|escape }}
+                                        <div class="date">
+                                            <a target="_blank" href="http://twitter.com/{{ translation.user }}">@{{ translation.user }}</a>
+                                            {{ translation.when|date:"Y.m.d H:i" }}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                 {% endfor %}
             </div>
         </div>
         <div id="sidebar">
-            <div id="updates" style="padding-left: 5px;">
-                <h3>Өнөөдөр хэлэлцэх үгүүд (2011.01.06)</h3>
-                <div>Сэдэв: Өгөгдлийн бүтэц</div>
+            <div id="updates" style="padding: 10px;">
+                <div class="today">
+                    <h3>Өнөөдөр хэлэлцэх үгүүд (2011.01.08)</h3>
+                    <div><strong>Сэдэв:</strong> Вэбээр зугаалах</div>
+                    <div class="selected">
+                        <a href="/134004">upload</a> 
+                        <a href="/193002">download</a> 
+                        <a href="/26005">share</a> 
+                        <a href="/167003">trailer</a> 
+                        <a href="/62005">forward</a> 
+                        <a href="/39009">e-mail</a> 
+                        <a href="/202001">forum</a> 
+                        <a href="/145003">spam</a> 
+                    </div>
+                </div>
                 <div>
-                    <a href="/107001">list</a> 
-                    <a href="/15004">stack</a> 
-                    <a href="/97002">queue</a> 
-                    <a href="/24004">graph</a> 
-                    <a href="/3005">node</a> 
-                    <a href="/31004">edge</a> 
-                    <a href="/108003">tree</a> 
+                    <h3>Өчигдөр хэлэлцсэн үгүүд (2011.01.07)</h3>
+                    <div><strong>Сэдэв:</strong> Компьютерийн зохион байгуулалт</div>
+                    <div class="selected">
+                        <a href="/11006">processor</a> 
+                        <a href="/52006">instruction</a> 
+                        <a href="/3006">memory</a> 
+                        <a href="/115004">register</a> 
+                        <a href="/158001">machine language</a> 
+                        <a href="/125003">assembly language</a> 
+                        <a href="/142003">logic gate</a> 
+                        <a href="/2006">arithmetic logic unit</a> 
+                    </div>
                 </div>
                 <h3>Шинээр орсон үгүүд</h3>
                 <ul>
                 {% for entry in new_entries %}
                     <li><a href="/{{ entry.key.id }}">{{ entry.entry|escape }}</a></li>
+                {% endfor %}
+                </ul>
+                <h3>Academia Mongolica блог</h3>
+                <ul>
+                {% for post in blog_posts %}
+                    <li><a target="_blank" href="{{ post.link }}">{{ post.title|escape }}</a></li>
                 {% endfor %}
                 </ul>
             </div>

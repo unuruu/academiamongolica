@@ -18,7 +18,7 @@ td {
     padding-top: 5px;
 }
 
-input {
+input[type="text"] {
     width: 100%;
     font-size: 15px;
     height: 28px;
@@ -65,6 +65,14 @@ a:hover {
 #sidebar {
     float: right;
     width: 50%;
+}
+
+.selected  a {
+    margin-right: 8px;
+}
+
+.today {
+    background-color: AntiqueWhite;
 }
 
 .translation {

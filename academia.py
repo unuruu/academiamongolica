@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from google.appengine.api import urlfetch
 from google.appengine.ext import webapp
 from google.appengine.ext.webapp import template
 from google.appengine.ext.webapp.util import run_wsgi_app
@@ -9,10 +10,35 @@ import simplejson
 import urllib
 import datetime
 import tweepy
+import feedparser
 import models
 
-consumer_token = "Q8XwfqvIapJ4TmcxCDwTGg"
-consumer_secret = "w3py8vuCoYqv0fwrX4Xf25YOw7Z8JxQGj63b5Uv78"
+# Twitter OAuth
+consumer_token = "vx4slYgEviwClevmUeKDg"
+consumer_secret = "4L2wX8iChiokkF9rlDcYHsvBMI5eSHhBU2vuVI8Hk"
+
+# bit.ly URL shortener
+bitly_login = "dagvadorj"
+bitly_api_key = "R_23c05ef1d017bf0e563097baf51134fc"
+
+class BitLy():
+    def __init__(self, login, apikey):
+        self.login = login
+        self.apikey = apikey
+
+    def shorten(self, param):
+        # url = "http://" + param
+        request = "http://api.bit.ly/shorten?version=2.0.1&longUrl="
+        request += param
+        request += "&login=" + self.login + "&apiKey=" +self.apikey
+
+        result = urlfetch.fetch(request)
+        json = simplejson.loads(result.content)
+        return json
+
+def shorten_url(url):
+    bitly = BitLy(bitly_login, bitly_api_key)
+    return bitly.shorten(url)['results'][url]['shortUrl']
 
 class TwitterAuthPage(webapp.RequestHandler):
     def get(self):
@@ -45,6 +71,8 @@ class TwitterBackPage(webapp.RequestHandler):
         api = tweepy.API(auth)
         session = get_current_session()
         session["twitter_user"] = api.me().screen_name
+        session["twitter_token_key"] = auth.access_token.key
+        session["twitter_token_secret"] = auth.access_token.secret
         self.redirect("/")
 
 class LastEntryPage(webapp.RequestHandler):
@@ -62,6 +90,14 @@ class LookupPage(webapp.RequestHandler):
         json += "]}"
         self.response.out.write(json)
 
+class AllEntriesPage(webapp.RequestHandler):
+    def get(self):
+        entries = models.Entry.gql("order by entry")
+        template_values = {
+            "entries": entries
+            }        
+        self.response.out.write(template.render("all_entries.html", template_values))
+        
 class NewEntryPage(webapp.RequestHandler):
     def post(self):
         session = get_current_session()
@@ -81,12 +117,21 @@ class NewTranslationPage(webapp.RequestHandler):
         session = get_current_session()
         entry = models.Entry.gql("where __key__=Key('Entry', :1)", 
                     int(self.request.get("entry"))).get()
-        if session.has_key("twitter_user"):
+        if session.has_key("twitter_user") and session.has_key("twitter_token_key") and session.has_key("twitter_token_secret"):
             models.Translation(
                 entry = entry,
                 translation = self.request.get("translation").replace("\n", " "),
                 user = session["twitter_user"]
                 ).put()
+            if self.request.get("tweet").lower() in ['true', 'yes', 't', '1', 'on', 'checked']:
+                auth = tweepy.OAuthHandler(consumer_token, consumer_secret)
+                auth.set_access_token(session["twitter_token_key"], session["twitter_token_secret"])
+                api = tweepy.API(auth)
+                tweet = entry.entry + " - " + self.request.get("translation").replace("\n", " ")
+                tweet = tweet[0:110] + "... "
+                short_url = shorten_url("http://academiamongolica.appspot.com/" + str(self.request.get("entry")))
+                tweet += short_url
+                api.update_status(tweet)
             self.redirect("/" + str(entry.key().id()))
         else:
             self.redirect("/")
@@ -98,7 +143,7 @@ class EntryPage(webapp.RequestHandler):
         entry = models.Entry.gql("where entry=:1", word.lower()).get()
         template_values = {}
         
-        new_entries = models.Entry.gql("order by when desc").fetch(20)
+        new_entries = models.Entry.gql("order by when desc").fetch(10)
         template_values["new_entries"] = new_entries
         
         if entry is None:
@@ -115,13 +160,19 @@ class EntryPage(webapp.RequestHandler):
         template_values["entry"] = entry
         if session.has_key("twitter_user"):
             template_values["user"] = session["twitter_user"]
+        
+        # blog posts        
+        atomxml = feedparser.parse("http://academiamongolica.blogspot.com/feeds/posts/default")
+        posts = atomxml['entries']
+        template_values["blog_posts"] = posts
+        
         self.response.out.write(template.render("index.html", template_values))
     def get(self, entryid):
         session = get_current_session()
         entry = models.Entry.gql("where __key__=Key('Entry',:1)", int(entryid)).get()
         template_values = {}
         
-        new_entries = models.Entry.gql("order by when desc").fetch(20)
+        new_entries = models.Entry.gql("order by when desc").fetch(10)
         template_values["new_entries"] = new_entries
         
         if entry is None:
@@ -133,6 +184,12 @@ class EntryPage(webapp.RequestHandler):
         template_values["entry"] = entry
         if session.has_key("twitter_user"):
             template_values["user"] = session["twitter_user"]
+        
+        # blog posts        
+        atomxml = feedparser.parse("http://academiamongolica.blogspot.com/feeds/posts/default")
+        posts = atomxml['entries']
+        template_values["blog_posts"] = posts
+        
         self.response.out.write(template.render("index.html", template_values))
 
 class VotePage(webapp.RequestHandler):
@@ -188,26 +245,11 @@ class CommentPage(webapp.RequestHandler):
                 comment = comment, translation = translation)
             new_comment.put()
         self.redirect("/comments/" + translation_key)
-        
-class SetDatePage(webapp.RequestHandler):
-    def get(self):
-        now = datetime.datetime.now()
-        for translation in models.Translation.all():
-            translation.when = now
-            translation.put()
-        for entry in models.Entry.all():
-            entry.when = now
-            entry.put()
-        for comment in models.Comment.all():
-            comment.when = now
-            comment.put()
-        for vote in models.Vote.all():
-            vote.when = now
-            vote.put()
 
 application = webapp.WSGIApplication([
 				    ('/', LastEntryPage),
 				    ('/lookup', LookupPage),
+                    ('/all', AllEntriesPage),
 				    ('/new_entry', NewEntryPage),
 				    ('/new_translation', NewTranslationPage),
 				    ('/vote', VotePage),
@@ -215,7 +257,6 @@ application = webapp.WSGIApplication([
 				    ('/twitter_auth', TwitterAuthPage),
 				    ('/twitter_back', TwitterBackPage),
 				    ('/twitter_out', TwitterOutPage),
-				    ('/set_date', SetDatePage),
 				    ('/([0-9]+)', EntryPage)],
 				    debug=True)
 
