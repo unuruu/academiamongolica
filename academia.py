@@ -14,12 +14,12 @@ import feedparser
 import models
 
 # Twitter OAuth
-consumer_token = "vx4slYgEviwClevmUeKDg"
-consumer_secret = "4L2wX8iChiokkF9rlDcYHsvBMI5eSHhBU2vuVI8Hk"
+consumer_token = "--"
+consumer_secret = "--"
 
 # bit.ly URL shortener
-bitly_login = "dagvadorj"
-bitly_api_key = "R_23c05ef1d017bf0e563097baf51134fc"
+bitly_login = "--"
+bitly_api_key = "--"
 
 class BitLy():
     def __init__(self, login, apikey):
@@ -61,7 +61,7 @@ class TwitterBackPage(webapp.RequestHandler):
     def get(self):
         oauth_token = self.request.get("oauth_token", None)
         oauth_verifier = self.request.get("oauth_verifier", None)
-        request_token = models. OAuthToken.gql("WHERE token_key=:key", key=oauth_token).get()
+        request_token = models.OAuthToken.gql("WHERE token_key=:key", key=oauth_token).get()
         if request_token is None:
             print "Invalid token"
             return
